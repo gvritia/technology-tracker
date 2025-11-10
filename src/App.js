@@ -1,25 +1,130 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
+import TechnologyCard from './components/TechnologyCard';
+import ProgressHeader from './components/ProgressHeader';
+import QuickActions from './components/QuickActions';
+import FilterTabs from './components/FilterTabs';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const [technologies, setTechnologies] = useState([
+        {
+            id: 1,
+            title: 'React Components',
+            description: 'Изучение базовых компонентов и их жизненного цикла',
+            status: 'completed'
+        },
+        {
+            id: 2,
+            title: 'JSX Syntax',
+            description: 'Освоение синтаксиса JSX и его особенностей',
+            status: 'in-progress'
+        },
+        {
+            id: 3,
+            title: 'State Management',
+            description: 'Работа с состоянием компонентов и подъем состояния',
+            status: 'not-started'
+        },
+        {
+            id: 4,
+            title: 'React Hooks',
+            description: 'Изучение основных хуков: useState, useEffect, useContext',
+            status: 'not-started'
+        },
+        {
+            id: 5,
+            title: 'React Router',
+            description: 'Настройка маршрутизации в React приложениях',
+            status: 'in-progress'
+        }
+    ]);
+
+    const [activeFilter, setActiveFilter] = useState('all');
+
+    // Функция изменения статуса технологии
+    const updateTechnologyStatus = (id) => {
+        setTechnologies(prevTech => prevTech.map(tech => {
+            if (tech.id === id) {
+                const statusOrder = ['not-started', 'in-progress', 'completed'];
+                const currentIndex = statusOrder.indexOf(tech.status);
+                const nextIndex = (currentIndex + 1) % statusOrder.length;
+                return { ...tech, status: statusOrder[nextIndex] };
+            }
+            return tech;
+        }));
+    };
+
+    // Функции быстрых действий
+    const markAllAsCompleted = () => {
+        setTechnologies(prevTech => prevTech.map(tech => ({
+            ...tech,
+            status: 'completed'
+        })));
+    };
+
+    const resetAllStatuses = () => {
+        setTechnologies(prevTech => prevTech.map(tech => ({
+            ...tech,
+            status: 'not-started'
+        })));
+    };
+
+    const randomNextTechnology = () => {
+        const notStartedTech = technologies.filter(tech => tech.status === 'not-started');
+        if (notStartedTech.length > 0) {
+            const randomTech = notStartedTech[Math.floor(Math.random() * notStartedTech.length)];
+            updateTechnologyStatus(randomTech.id);
+        } else {
+            alert('Все технологии уже начаты или завершены!');
+        }
+    };
+
+    // Фильтрация технологий
+    const filteredTechnologies = technologies.filter(tech => {
+        switch (activeFilter) {
+            case 'not-started':
+                return tech.status === 'not-started';
+            case 'in-progress':
+                return tech.status === 'in-progress';
+            case 'completed':
+                return tech.status === 'completed';
+            default:
+                return true;
+        }
+    });
+
+    return (
+        <div className="App">
+            <header className="App-header">
+                <h1>Трекер изучения технологий</h1>
+                <ProgressHeader technologies={technologies} />
+            </header>
+            <main className="App-main">
+                <QuickActions
+                    onMarkAllCompleted={markAllAsCompleted}
+                    onResetAll={resetAllStatuses}
+                    onRandomNext={randomNextTechnology}
+                />
+                <FilterTabs
+                    activeFilter={activeFilter}
+                    onFilterChange={setActiveFilter}
+                    technologies={technologies}
+                />
+                <div className="technologies-grid">
+                    {filteredTechnologies.map(tech => (
+                        <TechnologyCard
+                            key={tech.id}
+                            id={tech.id}
+                            title={tech.title}
+                            description={tech.description}
+                            status={tech.status}
+                            onStatusChange={updateTechnologyStatus}
+                        />
+                    ))}
+                </div>
+            </main>
+        </div>
+    );
 }
 
 export default App;

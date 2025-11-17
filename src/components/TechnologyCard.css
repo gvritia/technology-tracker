@@ -13,13 +13,15 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.status-not-started {
+.technology-card--not-started {
     border-left-color: #ff6b6b;
 }
-.status-in-progress {
+
+.technology-card--in-progress {
     border-left-color: #4ecdc4;
 }
-.status-completed {
+
+.technology-card--completed {
     border-left-color: #45b7d1;
 }
 

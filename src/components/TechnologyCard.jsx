@@ -43,9 +43,9 @@ function TechnologyCard({ id, title, description, status, onStatusChange }) {
             </div>
             <p className="technology-card__description">{description}</p>
             <div className="technology-card__footer">
-        <span className={`technology-card__status technology-card__status--${status}`}>
-          {getStatusText()}
-        </span>
+                <span className={`technology-card__status technology-card__status--${status}`}>
+                    {getStatusText()}
+                </span>
             </div>
         </div>
     );

@@ -58,3 +58,35 @@ body {
         font-size: 2rem;
     }
 }
+
+/* Стили для поиска */
+.search-box {
+    margin: 20px 0;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.search-box span {
+    font-size: 14px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* Контейнер для карточки и заметок */
+.technology-item {
+    display: flex;
+    flex-direction: column;
+}

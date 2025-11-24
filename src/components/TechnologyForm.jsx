@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useApp } from '../contexts/AppContext';
 import './TechnologyForm.css';
 
 function TechnologyForm({ onSave, onCancel, initialData = {} }) {
+    const { showSnackbar } = useApp();
+
     // Состояние формы
     const [formData, setFormData] = useState({
         title: initialData.title || '',
@@ -121,7 +124,18 @@ function TechnologyForm({ onSave, onCancel, initialData = {} }) {
                 ...formData,
                 resources: formData.resources.filter(resource => resource.trim() !== '')
             };
+
             onSave(cleanedData);
+
+            // Показываем уведомление
+            showSnackbar(
+                initialData.title
+                    ? 'Технология успешно обновлена!'
+                    : 'Технология успешно добавлена!',
+                'success'
+            );
+        } else {
+            showSnackbar('Пожалуйста, исправьте ошибки в форме', 'error');
         }
     };
 

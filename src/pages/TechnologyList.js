@@ -8,7 +8,6 @@ import DataExporter from '../pages/DataExporter';
 import DataImporter from '../pages/DataImporter';
 import BulkStatusEditor from '../components/BulkStatusEditor';
 
-
 function TechnologyList({ technologies, updateStatus, onImportTechnology, loading, error }) {
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchResults, setSearchResults] = useState([]);

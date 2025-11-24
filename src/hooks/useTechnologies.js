@@ -70,6 +70,20 @@ function useTechnologies() {
         );
     };
 
+    const addTechnology = (technology) => {
+        const newTechnology = {
+            id: Date.now(),
+            ...technology,
+            status: 'not-started',
+            notes: ''
+        };
+        setTechnologies(prev => [...prev, newTechnology]);
+    };
+
+    const deleteTechnology = (id) => {
+        setTechnologies(prev => prev.filter(tech => tech.id !== id));
+    };
+
     const calculateProgress = () => {
         if (technologies.length === 0) return 0;
         const completed = technologies.filter(tech => tech.status === 'completed').length;
@@ -81,6 +95,8 @@ function useTechnologies() {
         setTechnologies,
         updateStatus,
         updateNotes,
+        addTechnology,
+        deleteTechnology,
         progress: calculateProgress()
     };
 }

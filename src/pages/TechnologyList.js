@@ -1,13 +1,21 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import TechnologySearch from '../components/TechnologySearch';
+import RoadmapImporter from '../components/RoadmapImporter';
+import Modal from '../components/Modal';
 import './TechnologyList.css';
 
-function TechnologyList({ technologies, updateStatus }) {
+function TechnologyList({ technologies, updateStatus, onImportTechnology, loading, error }) {
     const [activeFilter, setActiveFilter] = useState('all');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearchActive, setIsSearchActive] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-    // Фильтрация технологий
-    const filteredByStatus = technologies.filter(tech => {
+    // Данные для отображения: либо результаты поиска, либо отфильтрованные технологии
+    const displayTechnologies = isSearchActive ? searchResults : technologies;
+
+    // Фильтрация технологий по статусу
+    const filteredByStatus = displayTechnologies.filter(tech => {
         switch (activeFilter) {
             case 'not-started':
                 return tech.status === 'not-started';
@@ -20,10 +28,23 @@ function TechnologyList({ technologies, updateStatus }) {
         }
     });
 
+    // Дополнительная фильтрация по поиску (для локального поиска)
     const filteredTechnologies = filteredByStatus.filter(tech =>
-        tech.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tech.description.toLowerCase().includes(searchQuery.toLowerCase())
+        tech.title.toLowerCase().includes((isSearchActive ? '' : '').toLowerCase()) ||
+        tech.description.toLowerCase().includes((isSearchActive ? '' : '').toLowerCase())
     );
+
+    // Обработчик поиска из API
+    const handleSearch = (results) => {
+        setSearchResults(results);
+        setIsSearchActive(results.length > 0);
+    };
+
+    // Обработчик импорта технологии
+    const handleImport = async (techData) => {
+        await onImportTechnology(techData);
+        setIsImportModalOpen(false);
+    };
 
     const getStatusText = (status) => {
         switch (status) {
@@ -39,20 +60,38 @@ function TechnologyList({ technologies, updateStatus }) {
             <div className="page-header">
                 <Link to="/" className="back-link">← Назад на главную</Link>
                 <h1>Все технологии</h1>
-                <Link to="/add-technology" className="btn btn-primary">
-                    + Добавить технологию
-                </Link>
+                <div className="header-actions">
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="btn btn-secondary"
+                    >
+                        📥 Импорт из API
+                    </button>
+                    <Link to="/add-technology" className="btn btn-primary">
+                        + Добавить технологию
+                    </Link>
+                </div>
             </div>
 
-            <div className="search-box">
-                <input
-                    type="text"
-                    placeholder="Поиск технологий..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <span>Найдено: {filteredTechnologies.length}</span>
-            </div>
+            {/* Компонент поиска с debounce */}
+            <TechnologySearch
+                onSearch={handleSearch}
+                placeholder="Поиск технологий в базе знаний..."
+            />
+
+            {/* Статус загрузки и ошибки */}
+            {loading && (
+                <div className="loading-state">
+                    <div className="spinner"></div>
+                    <p>Загрузка данных...</p>
+                </div>
+            )}
+
+            {error && (
+                <div className="error-state">
+                    <p>⚠️ {error}</p>
+                </div>
+            )}
 
             <div className="filter-tabs">
                 <h3>Фильтр по статусу</h3>
@@ -84,11 +123,55 @@ function TechnologyList({ technologies, updateStatus }) {
                 </div>
             </div>
 
+            {/* Информация о поиске */}
+            {isSearchActive && (
+                <div className="search-info">
+                    <p>
+                        🔍 Найдено технологий: <strong>{searchResults.length}</strong>
+                        <button
+                            onClick={() => {
+                                setSearchResults([]);
+                                setIsSearchActive(false);
+                            }}
+                            className="clear-search-btn"
+                        >
+                            Очистить поиск
+                        </button>
+                    </p>
+                </div>
+            )}
+
             <div className="technologies-grid">
                 {filteredTechnologies.map(tech => (
                     <div key={tech.id} className="technology-item">
                         <h3>{tech.title}</h3>
                         <p>{tech.description}</p>
+
+                        {/* Дополнительная информация из API */}
+                        {tech.difficulty && (
+                            <div className="tech-meta">
+                                <span className={`difficulty difficulty-${tech.difficulty}`}>
+                                    Сложность: {tech.difficulty === 'beginner' ? 'Начальная' :
+                                    tech.difficulty === 'intermediate' ? 'Средняя' : 'Продвинутая'}
+                                </span>
+                            </div>
+                        )}
+
+                        {tech.resources && tech.resources.length > 0 && (
+                            <div className="tech-resources">
+                                <strong>Ресурсы:</strong>
+                                <ul>
+                                    {tech.resources.slice(0, 2).map((resource, index) => (
+                                        <li key={index}>
+                                            <a href={resource} target="_blank" rel="noopener noreferrer">
+                                                {new URL(resource).hostname}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
                         <div className="technology-meta">
                             <span className={`status status-${tech.status}`}>
                                 {getStatusText(tech.status)}
@@ -101,14 +184,40 @@ function TechnologyList({ technologies, updateStatus }) {
                 ))}
             </div>
 
-            {filteredTechnologies.length === 0 && (
+            {filteredTechnologies.length === 0 && !loading && (
                 <div className="empty-state">
-                    <p>Технологий не найдено.</p>
-                    <Link to="/add-technology" className="btn btn-primary">
-                        Добавить первую технологию
-                    </Link>
+                    {isSearchActive ? (
+                        <>
+                            <p>По вашему запросу ничего не найдено.</p>
+                            <button
+                                onClick={() => {
+                                    setSearchResults([]);
+                                    setIsSearchActive(false);
+                                }}
+                                className="btn btn-primary"
+                            >
+                                Показать все технологии
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <p>Технологий не найдено.</p>
+                            <Link to="/add-technology" className="btn btn-primary">
+                                Добавить первую технологию
+                            </Link>
+                        </>
+                    )}
                 </div>
             )}
+
+            {/* Модальное окно импорта */}
+            <Modal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                title="Импорт технологий из API"
+            >
+                <RoadmapImporter onImport={handleImport} />
+            </Modal>
         </div>
     );
 }

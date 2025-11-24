@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import React, { useState } from 'react';
+import React from 'react';
 import './App.css';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
@@ -8,10 +8,49 @@ import TechnologyDetail from './pages/TechnologyDetail';
 import AddTechnology from './pages/AddTechnology';
 import Statistics from './pages/Statistics';
 import Settings from './pages/Settings';
-import useTechnologies from './hooks/useTechnologies';
+import useTechnologiesApi from './hooks/useTechnologiesApi';
 
 function App() {
-    const { technologies, updateStatus, updateNotes, addTechnology, deleteTechnology, progress } = useTechnologies();
+    const {
+        technologies,
+        apiData,
+        loading,
+        error,
+        updateStatus,
+        updateNotes,
+        addTechnology,
+        deleteTechnology,
+        progress,
+        importFromApi,
+        importRoadmap
+    } = useTechnologiesApi();
+
+    // Обработчик для импорта технологий из API
+    const handleImportTechnology = async (techData) => {
+        try {
+            await importFromApi(techData);
+        } catch (err) {
+            console.error('Ошибка импорта технологии:', err);
+        }
+    };
+
+    // Обработчик для импорта дорожной карты
+    const handleImportRoadmap = async (roadmapUrl) => {
+        try {
+            await importRoadmap(roadmapUrl);
+        } catch (err) {
+            console.error('Ошибка импорта дорожной карты:', err);
+        }
+    };
+
+    if (loading && technologies.length === 0) {
+        return (
+            <div className="app-loading">
+                <div className="spinner-large"></div>
+                <p>Загрузка технологий...</p>
+            </div>
+        );
+    }
 
     return (
         <Router>
@@ -23,9 +62,14 @@ function App() {
                             path="/"
                             element={
                                 <Home
-                                    technologies={technologies}
+                                    technologies={technologies || []}
                                     progress={progress}
                                     updateStatus={updateStatus}
+                                    onImportTechnology={handleImportTechnology}
+                                    onImportRoadmap={handleImportRoadmap}
+                                    apiData={apiData}
+                                    loading={loading}
+                                    error={error}
                                 />
                             }
                         />
@@ -33,8 +77,11 @@ function App() {
                             path="/technologies"
                             element={
                                 <TechnologyList
-                                    technologies={technologies}
+                                    technologies={technologies || []}
                                     updateStatus={updateStatus}
+                                    onImportTechnology={handleImportTechnology}
+                                    loading={loading}
+                                    error={error}
                                 />
                             }
                         />
@@ -42,7 +89,7 @@ function App() {
                             path="/technology/:techId"
                             element={
                                 <TechnologyDetail
-                                    technologies={technologies}
+                                    technologies={technologies || []}
                                     updateStatus={updateStatus}
                                     updateNotes={updateNotes}
                                     deleteTechnology={deleteTechnology}
@@ -61,7 +108,7 @@ function App() {
                             path="/statistics"
                             element={
                                 <Statistics
-                                    technologies={technologies}
+                                    technologies={technologies || []}
                                 />
                             }
                         />

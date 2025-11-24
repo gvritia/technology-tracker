@@ -194,12 +194,18 @@ function useTechnologiesApi() {
         );
     }, [setTechnologies]);
 
+    // В методе addTechnology добавьте поддержку новых полей:
     const addTechnology = useCallback((technology) => {
         const newTechnology = {
             id: Date.now(),
             ...technology,
             status: 'not-started',
-            notes: ''
+            notes: '',
+            createdAt: new Date().toISOString(),
+            // Добавляем новые поля по умолчанию если они не переданы
+            difficulty: technology.difficulty || 'beginner',
+            deadline: technology.deadline || '',
+            resources: technology.resources || []
         };
         setTechnologies(prev => [...prev, newTechnology]);
     }, [setTechnologies]);
